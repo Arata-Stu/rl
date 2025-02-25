@@ -2,6 +2,6 @@ defaults:
   - general
   - agent: ???
   - buffer: ??? ## on off
-  - env: ???
+  - envs: ???
   - encoder: maxvit
   

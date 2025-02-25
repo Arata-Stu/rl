@@ -24,7 +24,7 @@ def main(config: DictConfig):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # 環境の作成
-    env = make_env(config.env)
+    env = make_env(config.envs)
     dim_info = env.get_info()
     state_dim = dim_info["info_dim"]
     action_dim = dim_info["action_space"][0]
