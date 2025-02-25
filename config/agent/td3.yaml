@@ -1,0 +1,8 @@
+name: TD3
+hidden_dim: 256
+lr: 1e-5
+tau: 0.005
+gamma: 0.99
+policy_noise: 0.2
+noise_clip: 0.5
+policy_delay: 2

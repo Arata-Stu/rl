@@ -1,0 +1,5 @@
+name: SAC
+hidden_dim: 256
+lr: 1e-5
+tau: 0.005
+gamma: 0.99

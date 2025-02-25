@@ -1,0 +1,14 @@
+opencv-python
+matplotlib
+numpy
+torch
+torchvision
+omegaconf
+hydra-core
+torchvision
+tensorboard
+
+gymnasium
+Box2D
+swig
+pygame
