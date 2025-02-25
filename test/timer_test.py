@@ -38,7 +38,7 @@ def main(config: DictConfig):
 
     # エンコーダの作成
     encoder = build_encoder(config.encoder, latent_dim, device)
-
+    encoder.to(device)
     # 環境の初期化
     obs, vehicle_info = env.reset()
     

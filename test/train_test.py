@@ -29,7 +29,7 @@ def main(config: DictConfig):
     writer = SummaryWriter(log_dir=config.get("log_dir", "./runs"))
 
     # 環境の作成
-    env = make_env(config.env)
+    env = make_env(config.envs)
     dim_info = env.get_info()
     state_dim = dim_info["info_dim"]
     action_dim = dim_info["action_space"][0]
@@ -43,6 +43,7 @@ def main(config: DictConfig):
 
     # エンコーダの作成
     encoder = build_encoder(config.encoder, latent_dim, device)
+    encoder.to(device)
 
     # 環境の初期化
     obs, vehicle_info = env.reset()
