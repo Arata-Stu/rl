@@ -47,8 +47,17 @@ class CarRacingWithInfo(gym.Wrapper):
         }
 
     def step(self, action):
-        obs, reward, terminated, truncated, _ = self.env.step(action)
+        obs, reward, terminated, truncated, info = self.env.step(action)
+        # 車の位置を取得
+        car = self.env.unwrapped.car
+        x, y = car.hull.position
+        # PLAYFIELDは元の環境で定義されている閾値（例: 2000/SCALE）
+        PLAYFIELD = 2000 / 6.0  # 例として
+        if abs(x) > PLAYFIELD or abs(y) > PLAYFIELD:
+            terminated = True
+            reward = -100  # 適切なペナルティを与える
         return self._get_observation(obs), reward, terminated, truncated, self._get_info()
+
 
     def reset(self, **kwargs):
         obs, _ = self.env.reset(**kwargs)
