@@ -1,3 +1,4 @@
 name: CarRacing-v3
 render_mode: human
 img_size: [128, 128]
+max_steps: 2000

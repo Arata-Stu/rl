@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import optim
 import numpy as np
+import os
 
 from utils.helper import soft_update, transform_action
 from models.Critic.critic import Critic
@@ -61,7 +62,6 @@ class SACAgent:
         
         return transformed_action
 
-
     def update(self, batch):
         # batch は辞書型：{"z", "state", "action", "reward", "next_z", "next_state", "done"}
         z = torch.FloatTensor(batch["z"]).to(self.device)
@@ -115,3 +115,41 @@ class SACAgent:
             "alpha_loss": alpha_loss.item(),
             "alpha": torch.exp(self.log_alpha).item()
         }
+
+    def save(self, path, episode):
+        """
+        モデルのチェックポイントを保存する
+        """
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        checkpoint = {
+            'actor_state_dict': self.actor.state_dict(),
+            'critic_state_dict': self.critic.state_dict(),
+            'critic_target_state_dict': self.critic_target.state_dict(),
+            'actor_optimizer_state_dict': self.actor_optimizer.state_dict(),
+            'critic_optimizer_state_dict': self.critic_optimizer.state_dict(),
+            'log_alpha': self.log_alpha.detach().cpu().numpy(),
+            'alpha_optimizer_state_dict': self.alpha_optimizer.state_dict(),
+            'episode': episode
+        }
+        torch.save(checkpoint, path)
+        print(f"Checkpoint saved at {path}")
+
+    def load(self, path):
+        """
+        モデルのチェックポイントをロードする
+        """
+        if not os.path.exists(path):
+            print(f"Checkpoint not found at {path}")
+            return
+        
+        checkpoint = torch.load(path, map_location=self.device)
+        self.actor.load_state_dict(checkpoint['actor_state_dict'])
+        self.critic.load_state_dict(checkpoint['critic_state_dict'])
+        self.critic_target.load_state_dict(checkpoint['critic_target_state_dict'])
+        self.actor_optimizer.load_state_dict(checkpoint['actor_optimizer_state_dict'])
+        self.critic_optimizer.load_state_dict(checkpoint['critic_optimizer_state_dict'])
+        self.log_alpha = torch.tensor(checkpoint['log_alpha'], requires_grad=True, device=self.device)
+        self.alpha_optimizer.load_state_dict(checkpoint['alpha_optimizer_state_dict'])
+
+        print(f"Checkpoint loaded from {path}, resuming from episode {checkpoint['episode']}")
+

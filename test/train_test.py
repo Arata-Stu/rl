@@ -49,7 +49,7 @@ def main(config: DictConfig):
     obs, vehicle_info = env.reset()
 
     # 各種パラメータの取得
-    max_steps = config.max_steps
+    max_steps = config.total_steps
     save_imgs = config.get("save_imgs", False)          # 画像保存の有無
     save_interval = config.get("save_interval", 10)       # 画像保存の間隔
     train_start_steps = config.get("train_start_steps", 10000)  # 学習開始までのウォームアップステップ数
@@ -72,22 +72,24 @@ def main(config: DictConfig):
                 with Timer(f"Step {step}"):
                     state_img = obs["image"].copy()
                     state = obs["vehicle"]
+                    # print(f"speed: {state[0]}")
 
                     with Timer("Encoding"):
                         z = encode_img(encoder, state_img)
 
-                    with Timer("Decoding"):
-                        state_recon = decode_img(encoder, z)
+                    # with Timer("Decoding"):
+                    #     state_recon = decode_img(encoder, z)
 
-                    if save_imgs and step % save_interval == 0:
-                        with Timer("Visualization"):
-                            visualize_and_save_reconstruction(original=state_img,
-                                                              reconstructed=state_recon,
-                                                              output_dir=config.output_dir,
-                                                              step=step)
+                    # if save_imgs and step % save_interval == 0:
+                    #     with Timer("Visualization"):
+                    #         visualize_and_save_reconstruction(original=state_img,
+                    #                                           reconstructed=state_recon,
+                    #                                           output_dir=config.output_dir,
+                    #                                           step=step)
 
                     with Timer("Agent Action"):
                         action = agent.select_action(z=z, state=state, evaluate=False, action_space=env.action_space)
+                        # print(f"Action: {action}")
 
                     # TensorBoard にアクションの分布を記録
                     writer.add_histogram("Action/Distribution", action, episode)
@@ -111,13 +113,17 @@ def main(config: DictConfig):
                         with Timer("Training"):
                             batch = buffer.sample(batch_size)
                             loss = agent.update(batch)
-                            writer.add_scalar("Loss/Training", loss, episode * max_steps + step)
+
+                            for loss_name, loss_value in loss.items():
+                                writer.add_scalar(f"Loss/Training/{loss_name}", loss_value, episode * max_steps + step)
+
 
                     obs = next_obs
 
-                    if terminated:
+                    if terminated or truncated:
                         with Timer("Environment Reset"):
                             obs, vehicle_info = env.reset()
+                            print(f"Episode {episode}: Step {step} terminated because of terminated: {terminated} or truncated: {truncated}")
                         break
 
             episode_rewards.append(episode_reward)
@@ -145,7 +151,7 @@ def main(config: DictConfig):
         print(f"An error occurred: {e}")
     finally:
         # 最後に報酬を保存し、TensorBoardのwriterをクローズする
-        np.save(f"{config.output_dir}/episode_rewards.npy", np.array(episode_rewards))
+        # np.save(f"{config.output_dir}/episode_rewards.npy", np.array(episode_rewards))
         writer.close()
         print("Cleaned up resources.")
 
